@@ -1,0 +1,1 @@
+# Shoe Catalog package initialization

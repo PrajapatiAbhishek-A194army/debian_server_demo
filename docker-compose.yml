@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres_database:
+    image: postgres:15-alpine
+    container_name: postgres_database
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: shoe_erp_database
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_user -d shoe_erp_database"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend_application:
+    build:
+      context: ./applications/backend_application
+      dockerfile: Dockerfile
+    container_name: backend_application
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./applications/backend_application:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres_user:postgres_password@postgres_database:5432/shoe_erp_database
+      - JWT_SECRET_KEY=super_secret_jwt_signing_key_for_local_development_2026
+      - JWT_ALGORITHM=HS256
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+    depends_on:
+      postgres_database:
+        condition: service_healthy
+
+  web_application:
+    build:
+      context: ./applications/web_application
+      dockerfile: Dockerfile
+    container_name: web_application
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./applications/web_application:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+    depends_on:
+      - backend_application
+
+volumes:
+  postgres_data:
