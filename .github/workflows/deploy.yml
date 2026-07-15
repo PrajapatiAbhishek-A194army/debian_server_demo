@@ -1,0 +1,27 @@
+name: CI/CD Deploy to WSL Debian
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Production Environment
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+            echo "Copying .env.example to .env. Please update any production secrets directly in WSL if needed."
+          fi
+
+      - name: Build and Start Containers
+        run: |
+          # Stop existing containers if running
+          docker compose down
+          # Rebuild and start detached
+          docker compose up --build -d
