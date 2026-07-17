@@ -48,8 +48,9 @@ services:
     volumes:
       - ./applications/web_application:/app
       - /app/node_modules
+    args:
+      VITE_API_URL: /api
     environment:
-      - VITE_API_URL=${VITE_API_URL}
       - VITE_RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
     depends_on:
       - backend_application
